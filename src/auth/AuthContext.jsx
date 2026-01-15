@@ -4,25 +4,26 @@ import { api } from '../api/apiClient';
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        // Check for token on mount
+    const [user, setUser] = useState(() => {
         const token = localStorage.getItem('token');
-        const storedUser = localStorage.getItem('user'); // Storing basic user info
-        if (token) {
-            // Ideally we would validate token with an API call like /me if available
-            // For now, assume validity or let next API call 401
-            if (storedUser) {
-                try {
-                    setUser(JSON.parse(storedUser));
-                } catch (e) {
-                    console.error("Failed to parse user from storage", e);
-                }
+        const storedUser = localStorage.getItem('user');
+        if (token && storedUser) {
+            try {
+                return JSON.parse(storedUser);
+            } catch (e) {
+                console.error("Failed to parse user from storage", e);
+                return null;
             }
         }
-        setLoading(false);
+        return null;
+    });
+    // Loading is false because we checked storage synchronously
+    const [loading, setLoading] = useState(false);
+
+    // Initial token check is now done in useState initializer
+    // We can verify token validity here if we have an API for it
+    useEffect(() => {
+        // Optional: specific logic to validate token with server
     }, []);
 
     const login = async (email, password) => {
