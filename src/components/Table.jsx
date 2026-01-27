@@ -69,8 +69,8 @@ const Table = ({
 
                     {/* Pagination Footer - Moved outside and unified */}
                     {pagination && (pagination.currentPage > 1 || !pagination.isLastPage || (pagination.totalPages && pagination.totalPages > 1)) && (
-                        <div className="mt-4 px-4 py-3 flex items-center justify-between sm:px-0">
-                            <div className="flex-1 flex items-center justify-between">
+                        <div className="mt-4 px-4 py-3 flex flex-col space-y-4 sm:flex-row sm:space-y-0 items-center justify-between sm:px-0">
+                            <div className="flex flex-col items-center sm:flex-row sm:justify-between w-full sm:w-auto text-center sm:text-left">
                                 <div>
                                     <p className="text-sm text-gray-700">
                                         Page <span className="font-medium">{pagination.currentPage}</span>
@@ -79,15 +79,15 @@ const Table = ({
                                         )}
                                     </p>
                                 </div>
-                                <div className="flex items-center space-x-2">
+                                <div className="flex items-center justify-center">
                                     <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                                         <button
                                             onClick={() => onPageChange(Math.max(1, pagination.currentPage - 1))}
                                             disabled={pagination.currentPage <= 1}
-                                            className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                            className="relative inline-flex items-center px-1.5 py-1.5 sm:px-2 sm:py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                         >
                                             <span className="sr-only">Previous</span>
-                                            <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+                                            <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
                                         </button>
 
                                         {/* Page Numbers */}
@@ -102,7 +102,7 @@ const Table = ({
                                                         key={page}
                                                         onClick={() => onPageChange(page)}
                                                         aria-current={pagination.currentPage === page ? 'page' : undefined}
-                                                        className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${pagination.currentPage === page
+                                                        className={`relative inline-flex items-center px-3 py-1.5 sm:px-4 sm:py-2 border text-xs sm:text-sm font-medium ${pagination.currentPage === page
                                                             ? 'z-10 bg-purple-50 border-purple-500 text-purple-600'
                                                             : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
                                                             }`}
@@ -113,7 +113,7 @@ const Table = ({
                                             }
 
                                             if ((page === 2 && pagination.currentPage > 3) || (page === pagination.totalPages - 1 && pagination.currentPage < pagination.totalPages - 2)) {
-                                                return <span key={`ell-${page}`} className="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">...</span>;
+                                                return <span key={`ell-${page}`} className="relative inline-flex items-center px-2 py-1.5 sm:px-4 sm:py-2 border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-700">...</span>;
                                             }
 
                                             return null;
@@ -128,10 +128,10 @@ const Table = ({
                                         <button
                                             onClick={() => onPageChange(pagination.currentPage + 1)}
                                             disabled={pagination.isLastPage || (pagination.totalPages && pagination.currentPage >= pagination.totalPages)}
-                                            className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                            className="relative inline-flex items-center px-1.5 py-1.5 sm:px-2 sm:py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
                                         >
                                             <span className="sr-only">Next</span>
-                                            <ChevronRight className="h-5 w-5" aria-hidden="true" />
+                                            <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" />
                                         </button>
                                     </nav>
                                 </div>

@@ -3,12 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Table from '../components/Table';
 import SearchFilterBar from '../components/SearchFilterBar';
-import { api } from '../api/apiClient';
+import { useData } from '../context/DataContext';
 
 const Users = () => {
     const navigate = useNavigate();
-    const [users, setUsers] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { users, fetchUsers, loadingUsers } = useData();
     const [error, setError] = useState(null);
 
     // Filter States
@@ -16,25 +15,15 @@ const Users = () => {
     const [roleFilter, setRoleFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
 
-    const fetchUsers = async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const response = await api.get('/view/allusers');
-            if (response.success) {
-                setUsers(response.myusers || []);
-            } else {
-                setError(response.message || "Failed to fetch users");
-            }
-        } catch (err) {
-            setError(err.message || "An error occurred fetching users");
-        } finally {
-            setLoading(false);
-        }
-    };
-
     useEffect(() => {
-        fetchUsers();
+        const loadData = async () => {
+            try {
+                await fetchUsers();
+            } catch (err) {
+                setError(err.message || "An error occurred fetching users");
+            }
+        };
+        loadData();
     }, []);
 
     // Filter Logic
@@ -110,7 +99,7 @@ const Users = () => {
                         <div className="flex justify-between items-center">
                             <h1 className="text-3xl font-bold leading-tight text-gray-900">Users</h1>
                             <button
-                                onClick={fetchUsers}
+                                onClick={() => fetchUsers(true)}
                                 className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
                             >
                                 Refresh
@@ -163,7 +152,7 @@ const Users = () => {
                             <Table
                                 columns={columns}
                                 data={paginatedUsers}
-                                isLoading={loading}
+                                isLoading={loadingUsers}
                                 keyField="id"
                                 pagination={{
                                     currentPage: currentPage,

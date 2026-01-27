@@ -4,42 +4,31 @@ import Navbar from '../components/Navbar';
 import Table from '../components/Table';
 import SearchFilterBar from '../components/SearchFilterBar';
 import Loader from '../components/Loader';
-import { api } from '../api/apiClient';
+import { useData } from '../context/DataContext';
 
 const Vehicles = () => {
     const navigate = useNavigate();
-    const [vehicles, setVehicles] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { vehiclePages, fetchVehiclesPage, loadingVehicles } = useData();
     const [page, setPage] = useState(1);
     const [error, setError] = useState(null);
+
+    // Get current page list from context
+    const vehicles = vehiclePages[page] || [];
+
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                await fetchVehiclesPage(page);
+            } catch (err) {
+                setError(err.message || "An error occurred fetching vehicles");
+            }
+        };
+        loadData();
+    }, [page]);
 
     // Filter States
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
-
-    const fetchVehicles = async (currentPage) => {
-        setLoading(true);
-        setError(null);
-        try {
-            // Assuming API supports ?page=X for pagination based on standard practices
-            // If API uses offset, we might need to adjust.
-            // Based on user sample: "pag": 0 might be index or page number.
-            const response = await api.get(`/view/vehicles?page=${currentPage}`);
-            if (response.success) {
-                setVehicles(response.myvehicles || []);
-            } else {
-                setError(response.message || "Failed to fetch vehicles");
-            }
-        } catch (err) {
-            setError(err.message || "An error occurred fetching vehicles");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchVehicles(page);
-    }, [page]);
 
     // Filter Logic
     const filteredVehicles = vehicles.filter(vehicle => {
@@ -87,7 +76,7 @@ const Vehicles = () => {
                         <div className="flex justify-between items-center">
                             <h1 className="text-3xl font-bold leading-tight text-gray-900">Vehicles</h1>
                             <button
-                                onClick={() => fetchVehicles(page)}
+                                onClick={() => fetchVehiclesPage(page, true)}
                                 className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
                             >
                                 Refresh
@@ -131,13 +120,10 @@ const Vehicles = () => {
                             <Table
                                 columns={columns}
                                 data={filteredVehicles}
-                                isLoading={loading}
+                                isLoading={loadingVehicles}
                                 keyField="id"
                                 pagination={{
                                     currentPage: page,
-                                    // Disable next if we got fewer results than expected (e.g. page size 20)
-                                    // For now, simple logic: if empty, disable next.
-                                    // We generally assume limit is 10 or 20. If we got less than 10, it's likely the last page.
                                     isLastPage: vehicles.length < 10
                                 }}
                                 onPageChange={setPage}

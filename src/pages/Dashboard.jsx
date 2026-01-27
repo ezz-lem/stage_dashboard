@@ -14,64 +14,33 @@ import {
     UsersGrowthChart,
     VehiclesTypeChart
 } from '../components/DashboardCharts';
-import { api } from '../api/apiClient';
+import { useData } from '../context/DataContext';
 
 const Dashboard = () => {
-    const [loading, setLoading] = useState(true);
-    const [stats, setStats] = useState([]);
+    const { users, vehiclePages, fetchUsers, fetchVehiclesPage, loadingUsers, loadingVehicles } = useData();
     const [recentUsers, setRecentUsers] = useState([]);
+    const [stats, setStats] = useState([]);
     const [chartsData, setChartsData] = useState({
         userGrowth: null,
         vehicleBrands: null
     });
 
+    const isLoading = loadingUsers || loadingVehicles;
+
     useEffect(() => {
-        const fetchData = async () => {
-            const CACHE_KEY = 'dashboard_data_v1';
-            const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-
-            // Check Cache
-            const cached = sessionStorage.getItem(CACHE_KEY);
-            if (cached) {
-                try {
-                    const { timestamp, users, vehicles } = JSON.parse(cached);
-                    if (Date.now() - timestamp < CACHE_DURATION) {
-                        processData(users, vehicles);
-                        setLoading(false);
-                        return; // Use cached data
-                    }
-                } catch (e) {
-                    console.error("Cache parse error", e);
-                    sessionStorage.removeItem(CACHE_KEY);
-                }
-            }
-
+        const loadAllData = async () => {
             try {
-                const [usersRes, vehiclesRes] = await Promise.all([
-                    api.get('/view/allusers'),
-                    api.get('/view/vehicles?page=1')
+                const [allUsers, firstVehicles] = await Promise.all([
+                    fetchUsers(),
+                    fetchVehiclesPage(1)
                 ]);
-
-                const users = usersRes.success ? (usersRes.myusers || []) : [];
-                const vehicles = vehiclesRes.success ? (vehiclesRes.myvehicles || []) : [];
-
-                // Update Cache
-                sessionStorage.setItem(CACHE_KEY, JSON.stringify({
-                    timestamp: Date.now(),
-                    users,
-                    vehicles
-                }));
-
-                processData(users, vehicles);
-
+                processData(allUsers, firstVehicles);
             } catch (error) {
                 console.error("Failed to fetch dashboard data", error);
-            } finally {
-                setLoading(false);
             }
         };
 
-        fetchData();
+        loadAllData();
     }, []);
 
     const processData = (users, vehicles) => {
@@ -168,7 +137,7 @@ const Dashboard = () => {
         });
     };
 
-    if (loading) {
+    if (isLoading && users.length === 0) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
