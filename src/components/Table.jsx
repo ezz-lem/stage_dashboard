@@ -10,7 +10,7 @@ const Table = ({
     onPageChange,
     onRowClick
 }) => {
-    if (isLoading) {
+    if (isLoading && (!data || data.length === 0)) {
         return (
             <div className="bg-white shadow overflow-hidden border-b border-gray-200 sm:rounded-lg p-10 text-center text-gray-500">
                 Loading data...

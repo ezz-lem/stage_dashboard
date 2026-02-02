@@ -49,10 +49,20 @@ export const DataProvider = ({ children }) => {
     }, []);
 
     const fetchUsers = async (force = false) => {
-        if (!force && users.length > 0 && (Date.now() - lastFetchUsers < CACHE_DURATION)) {
+        // If we have cached users, return them immediately but still fetch in the background
+        if (!force && users.length > 0) {
+            // Trigger background fetch if it's been more than a short while or if force is false but we just want fresh data
+            // To prevent too many background calls, we check CACHE_DURATION
+            if (Date.now() - lastFetchUsers > CACHE_DURATION / 5) { // Refresh if more than 1 minute old
+                performFetchUsers();
+            }
             return users;
         }
 
+        return await performFetchUsers();
+    };
+
+    const performFetchUsers = async () => {
         setLoadingUsers(true);
         try {
             const response = await api.get('/view/allusers');
@@ -68,36 +78,43 @@ export const DataProvider = ({ children }) => {
             }
         } catch (error) {
             console.error("Error fetching users:", error);
-            throw error;
+            // Don't throw if we already have data (background refresh failed)
+            if (users.length === 0) throw error;
         } finally {
             setLoadingUsers(false);
         }
     };
 
     const fetchVehiclesPage = async (page = 1, force = false) => {
+        // If we have this page cached, return it immediately but trigger a background refresh
         if (!force && vehiclePages[page]) {
+            // Background refresh if needed
+            performFetchVehiclesPage(page);
             return vehiclePages[page];
         }
 
+        return await performFetchVehiclesPage(page);
+    };
+
+    const performFetchVehiclesPage = async (page) => {
         setLoadingVehicles(true);
         try {
             const response = await api.get(`/view/vehicles?page=${page}`);
             if (response.success) {
                 const data = response.myvehicles || [];
-                const newPages = { ...vehiclePages, [page]: data };
-                setVehiclePages(newPages);
-                // Simple total count estimation if not provided by API
-                // If we get fewer than expected (e.g. 10), we might know total
-                // For now, let's just store the pages
-                sessionStorage.setItem('cached_vehicles', JSON.stringify({
-                    data: newPages,
-                    timestamp: Date.now()
-                }));
+                setVehiclePages(prev => {
+                    const newPages = { ...prev, [page]: data };
+                    sessionStorage.setItem('cached_vehicles', JSON.stringify({
+                        data: newPages,
+                        timestamp: Date.now()
+                    }));
+                    return newPages;
+                });
                 return data;
             }
         } catch (error) {
             console.error("Error fetching vehicles:", error);
-            throw error;
+            if (!vehiclePages[page]) throw error;
         } finally {
             setLoadingVehicles(false);
         }
