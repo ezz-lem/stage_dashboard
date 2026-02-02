@@ -20,13 +20,20 @@ const Agenda = () => {
     const [loadingBookings, setLoadingBookings] = useState(true); // Only track booking loading
     const [error, setError] = useState(null);
 
-    // Filter & Search State
+    // Filter, Search & Pagination State
     const [searchTerm, setSearchTerm] = useState('');
     const [activeFilter, setActiveFilter] = useState('all');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 30;
 
     // Tooltip State
     const [tooltipEvent, setTooltipEvent] = useState(null);
     const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+
+    useEffect(() => {
+        // Reset to page 1 when search or filter changes
+        setCurrentPage(1);
+    }, [searchTerm, activeFilter]);
 
     useEffect(() => {
         const loadData = async () => {
@@ -64,8 +71,8 @@ const Agenda = () => {
         loadData();
     }, []);
 
-    // Combine fetched vehicles with any missing vehicles found in bookings
-    const combinedVehicles = useMemo(() => {
+    // Helper to get total pages and sliced data
+    const { paginatedVehicles, totalPages } = useMemo(() => {
         const vehicleMap = new Map();
 
         // 1. Add fetched vehicles from Context
@@ -98,15 +105,24 @@ const Agenda = () => {
             );
         }
 
-        return result.sort((a, b) =>
-            a.title.localeCompare(b.title)
-        );
-    }, [vehicles, bookings, searchTerm]);
+        // Sort A-Z
+        result.sort((a, b) => a.title.localeCompare(b.title));
 
-    // Map combined vehicles to FullCalendar resources
+        const totalItems = result.length;
+        const total = Math.ceil(totalItems / itemsPerPage);
+
+        // Slice for current page
+        const start = (currentPage - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+        const sliced = result.slice(start, end);
+
+        return { paginatedVehicles: sliced, totalPages: total };
+    }, [vehicles, bookings, searchTerm, currentPage, itemsPerPage]);
+
+    // Map paginated vehicles to FullCalendar resources
     const resources = useMemo(() => {
-        return combinedVehicles;
-    }, [combinedVehicles]);
+        return paginatedVehicles;
+    }, [paginatedVehicles]);
 
     // Filtered Bookings for the calendar
     const filteredBookings = useMemo(() => {
@@ -196,6 +212,9 @@ const Agenda = () => {
                     onSearchChange={setSearchTerm}
                     activeFilter={activeFilter}
                     onFilterChange={setActiveFilter}
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
                 />
 
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">

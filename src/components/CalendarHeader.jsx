@@ -1,6 +1,14 @@
-import { Calendar as CalendarIcon, Search, X } from 'lucide-react';
+import { Calendar as CalendarIcon, Search, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
-const CalendarHeader = ({ searchTerm, onSearchChange, activeFilter, onFilterChange }) => {
+const CalendarHeader = ({
+    searchTerm,
+    onSearchChange,
+    activeFilter,
+    onFilterChange,
+    currentPage,
+    totalPages,
+    onPageChange
+}) => {
     const statuses = [
         {
             label: 'Confirmed',
@@ -42,7 +50,30 @@ const CalendarHeader = ({ searchTerm, onSearchChange, activeFilter, onFilterChan
                     <p className="text-gray-500 mt-1">Manage and track vehicle bookings across your fleet.</p>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-4">
+                    {/* Pagination Controls */}
+                    <div className="flex items-center bg-white border border-gray-200 rounded-xl px-1 py-1 shadow-sm">
+                        <button
+                            onClick={() => onPageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            className="p-1.5 rounded-lg hover:bg-gray-50 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                            title="Previous Page"
+                        >
+                            <ChevronLeft className="w-5 h-5 text-gray-600" />
+                        </button>
+                        <span className="px-3 text-sm font-bold text-gray-700 min-w-[80px] text-center">
+                            Page {currentPage} of {totalPages || 1}
+                        </span>
+                        <button
+                            onClick={() => onPageChange(currentPage + 1)}
+                            disabled={currentPage === totalPages || totalPages === 0}
+                            className="p-1.5 rounded-lg hover:bg-gray-50 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                            title="Next Page"
+                        >
+                            <ChevronRight className="w-5 h-5 text-gray-600" />
+                        </button>
+                    </div>
+
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <input
@@ -68,8 +99,8 @@ const CalendarHeader = ({ searchTerm, onSearchChange, activeFilter, onFilterChan
                 <button
                     onClick={() => onFilterChange('all')}
                     className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${activeFilter === 'all'
-                            ? 'bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-200'
-                            : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-200'
+                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
                         }`}
                 >
                     All Statuses
@@ -79,8 +110,8 @@ const CalendarHeader = ({ searchTerm, onSearchChange, activeFilter, onFilterChan
                         key={status.id}
                         onClick={() => onFilterChange(status.id)}
                         className={`flex items-center px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${activeFilter === status.id
-                                ? status.activeClass
-                                : status.inactiveClass
+                            ? status.activeClass
+                            : status.inactiveClass
                             }`}
                     >
                         <span className={`w-2 h-2 rounded-full mr-2 ${activeFilter === status.id ? 'bg-white' : status.dotClass
