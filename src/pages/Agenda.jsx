@@ -67,13 +67,37 @@ const Agenda = () => {
         loadData();
     }, []);
 
-    // Map vehicles to FullCalendar resources
+    // Combine fetched vehicles with any missing vehicles found in bookings
+    const combinedVehicles = useMemo(() => {
+        const vehicleMap = new Map();
+
+        // 1. Add fetched vehicles
+        vehicles.forEach(v => {
+            vehicleMap.set(String(v.id), {
+                id: String(v.id),
+                title: `${v.brand} ${v.model} (${v.matricule})`
+            });
+        });
+
+        // 2. Add vehicles from bookings if missing
+        bookings.forEach(b => {
+            const vId = String(b.vehicle_id);
+            if (!vehicleMap.has(vId)) {
+                // If detailed info is missing, use fullname or fallback
+                vehicleMap.set(vId, {
+                    id: vId,
+                    title: b.vehicle_fullname || `Vehicle #${vId}`
+                });
+            }
+        });
+
+        return Array.from(vehicleMap.values());
+    }, [vehicles, bookings]);
+
+    // Map combined vehicles to FullCalendar resources
     const resources = useMemo(() => {
-        return vehicles.map(v => ({
-            id: String(v.id),
-            title: `${v.brand} ${v.model} (${v.matricule})`
-        }));
-    }, [vehicles]);
+        return combinedVehicles;
+    }, [combinedVehicles]);
 
     // Map bookings to FullCalendar events
     const events = useMemo(() => {
