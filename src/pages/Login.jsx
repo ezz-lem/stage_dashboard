@@ -27,30 +27,7 @@ const Login = () => {
             // 1. Authenticate
             await login(loginEmail, password);
 
-            // 2. Pre-fetch Dashboard Data (Background)
-            // We do this BEFORE navigating so the dashboard has data ready.
-            const CACHE_KEY = 'dashboard_data_v1';
-            try {
-                const [usersRes, vehiclesRes] = await Promise.all([
-                    api.get('/view/allusers'),
-                    api.get('/view/vehicles?page=1')
-                ]);
-
-                const users = usersRes.success ? (usersRes.myusers || []) : [];
-                const vehicles = vehiclesRes.success ? (vehiclesRes.myvehicles || []) : [];
-
-                if (users.length > 0 || vehicles.length > 0) {
-                    sessionStorage.setItem(CACHE_KEY, JSON.stringify({
-                        timestamp: Date.now(),
-                        users,
-                        vehicles
-                    }));
-                }
-            } catch (fetchError) {
-                console.error("Background fetch failed", fetchError);
-                // We don't block login if this fails; the dashboard will just fetch it itself.
-            }
-
+            // Navigate to dashboard - DataContext will handle data loading safely
             navigate('/dashboard');
         } catch (err) {
             setError(err.message || 'Failed to login');

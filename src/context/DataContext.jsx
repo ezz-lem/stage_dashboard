@@ -23,6 +23,9 @@ export const DataProvider = ({ children }) => {
 
     // Persist to sessionStorage
     useEffect(() => {
+        // Cleanup legacy keys to free up space
+        sessionStorage.removeItem('dashboard_data_v1');
+
         const savedUsers = sessionStorage.getItem('cached_users');
         const savedVehicles = sessionStorage.getItem('cached_vehicles');
 
