@@ -31,10 +31,11 @@ const Agenda = () => {
                     table: "vehiclesbookings",
                     select: ["id", "start", "end", "vehicle_id", "status"],
                     batch: 1,
-                    batch_size: 100 // Increased batch size for more data
+                    batch_size: 1000 // Fetch all items (total is ~600)
                 });
 
-                const bookingsData = bookingsRes.success ? (bookingsRes.data || []) : [];
+                // The API returns data in 'records' field based on user example
+                const bookingsData = bookingsRes.success ? (bookingsRes.records || []) : [];
 
                 // Filter statuses: confirmed, pending, cancelled
                 const filteredBookings = bookingsData.filter(b =>
