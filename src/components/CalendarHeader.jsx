@@ -19,6 +19,9 @@ const CalendarHeader = () => {
                     <span className="flex items-center px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">
                         <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span> Pending
                     </span>
+                    <span className="flex items-center px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
+                        <span className="w-2 h-2 bg-gray-500 rounded-full mr-2"></span> Maintenance
+                    </span>
                     <span className="flex items-center px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">
                         <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span> Cancelled
                     </span>

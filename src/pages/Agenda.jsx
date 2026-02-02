@@ -50,9 +50,9 @@ const Agenda = () => {
                 // The API returns data in 'records' field based on user example
                 const bookingsData = bookingsRes.success ? (bookingsRes.records || []) : [];
 
-                // Filter statuses: confirmed, pending, cancelled
+                // Filter statuses: confirmed, pending, cancelled, maintenance
                 const filteredBookings = bookingsData.filter(b =>
-                    ['confirmed', 'pending', 'cancelled'].includes(b.status.toLowerCase())
+                    ['confirmed', 'pending', 'cancelled', 'maintenance'].includes(b.status.toLowerCase())
                 );
 
                 setBookings(filteredBookings);
@@ -84,7 +84,8 @@ const Agenda = () => {
             end: b.end,
             title: `${b.status}`,
             backgroundColor: b.status.toLowerCase() === 'confirmed' ? '#10B981' :
-                b.status.toLowerCase() === 'pending' ? '#F59E0B' : '#EF4444',
+                b.status.toLowerCase() === 'pending' ? '#F59E0B' :
+                    b.status.toLowerCase() === 'maintenance' ? '#6B7280' : '#EF4444',
             borderColor: 'transparent',
             extendedProps: {
                 status: b.status,
