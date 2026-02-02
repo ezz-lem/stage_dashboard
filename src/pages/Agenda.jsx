@@ -84,7 +84,9 @@ const Agenda = () => {
             }
         });
 
-        return Array.from(vehicleMap.values());
+        return Array.from(vehicleMap.values()).sort((a, b) =>
+            a.title.localeCompare(b.title)
+        );
     }, [vehicles, bookings]);
 
     // Map combined vehicles to FullCalendar resources
