@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
-import { LogOut, Car, Users, LayoutDashboard, Menu, X } from 'lucide-react';
+import { LogOut, Car, Users, LayoutDashboard, Menu, X, Calendar } from 'lucide-react';
 
 const Navbar = () => {
     const { logout, user } = useAuth();
@@ -53,6 +53,9 @@ const Navbar = () => {
                                 </Link>
                                 <Link to="/users" className={getLinkClass('/users')}>
                                     <Users className={`w-4 h-4 mr-2 ${isActive('/users') ? 'text-indigo-500' : ''}`} /> Users
+                                </Link>
+                                <Link to="/agenda" className={getLinkClass('/agenda')}>
+                                    <Calendar className={`w-4 h-4 mr-2 ${isActive('/agenda') ? 'text-indigo-500' : ''}`} /> Agenda
                                 </Link>
                             </div>
                         </div>
@@ -130,6 +133,11 @@ const Navbar = () => {
                             <Link to="/users" className={getMobileLinkClass('/users')}>
                                 <div className="flex items-center">
                                     <Users className="w-5 h-5 mr-3" /> Users
+                                </div>
+                            </Link>
+                            <Link to="/agenda" className={getMobileLinkClass('/agenda')}>
+                                <div className="flex items-center">
+                                    <Calendar className="w-5 h-5 mr-3" /> Agenda
                                 </div>
                             </Link>
                         </nav>

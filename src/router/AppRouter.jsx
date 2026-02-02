@@ -6,6 +6,7 @@ import Vehicles from '../pages/Vehicles';
 import Users from '../pages/Users';
 import UserDetail from '../pages/UserDetail';
 import VehicleDetail from '../pages/VehicleDetail';
+import Agenda from '../pages/Agenda';
 
 const AppRouter = () => {
     return (
@@ -14,6 +15,7 @@ const AppRouter = () => {
 
             <Route element={<ProtectedRoute />}>
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/agenda" element={<Agenda />} />
                 <Route path="/vehicles" element={<Vehicles />} />
                 <Route path="/vehicles/:id" element={<VehicleDetail />} />
                 <Route path="/users" element={<Users />} />
