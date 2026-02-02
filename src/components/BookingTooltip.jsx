@@ -65,7 +65,8 @@ const BookingTooltip = ({ event, position }) => {
                 </div>
             </div>
 
-            <div className="mt-3 pt-3 border-t border-gray-50 flex items-center justify-end text-xs text-gray-400">
+            <div className="mt-3 pt-3 border-t border-gray-50 flex items-center justify-between text-xs text-gray-400">
+                <span>ID: #{event.id}</span>
                 <span className="flex items-center">
                     <Info className="w-3 h-3 mr-1" />
                     Detailed view
