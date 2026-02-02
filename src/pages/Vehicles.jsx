@@ -8,23 +8,20 @@ import { useData } from '../context/DataContext';
 
 const Vehicles = () => {
     const navigate = useNavigate();
-    const { vehiclePages, fetchVehiclesPage, loadingVehicles } = useData();
-    const [page, setPage] = useState(1);
+    const { vehicles, fetchVehicles, loadingVehicles } = useData();
+    const [currentPage, setCurrentPage] = useState(1);
     const [error, setError] = useState(null);
-
-    // Get current page list from context
-    const vehicles = vehiclePages[page] || [];
 
     useEffect(() => {
         const loadData = async () => {
             try {
-                await fetchVehiclesPage(page);
+                await fetchVehicles();
             } catch (err) {
                 setError(err.message || "An error occurred fetching vehicles");
             }
         };
         loadData();
-    }, [page]);
+    }, []);
 
     // Filter States
     const [searchQuery, setSearchQuery] = useState('');
@@ -76,7 +73,7 @@ const Vehicles = () => {
                         <div className="flex justify-between items-center">
                             <h1 className="text-3xl font-bold leading-tight text-gray-900">Vehicles</h1>
                             <button
-                                onClick={() => fetchVehiclesPage(page, true)}
+                                onClick={() => fetchVehicles(true)}
                                 className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none"
                             >
                                 Refresh
@@ -119,14 +116,15 @@ const Vehicles = () => {
                             />
                             <Table
                                 columns={columns}
-                                data={filteredVehicles}
+                                data={filteredVehicles.slice((currentPage - 1) * 10, currentPage * 10)}
                                 isLoading={loadingVehicles}
                                 keyField="id"
                                 pagination={{
-                                    currentPage: page,
-                                    isLastPage: vehicles.length < 10
+                                    currentPage: currentPage,
+                                    totalPages: Math.ceil(filteredVehicles.length / 10),
+                                    isLastPage: currentPage >= Math.ceil(filteredVehicles.length / 10)
                                 }}
-                                onPageChange={setPage}
+                                onPageChange={setCurrentPage}
                                 onRowClick={(vehicle) => navigate(`/vehicles/${vehicle.id}`, { state: { vehicle } })}
                             />
                         </div>

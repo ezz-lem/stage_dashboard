@@ -17,7 +17,7 @@ import {
 import { useData } from '../context/DataContext';
 
 const Dashboard = () => {
-    const { users, vehiclePages, fetchUsers, fetchVehiclesPage, loadingUsers, loadingVehicles } = useData();
+    const { users, vehicles, fetchUsers, fetchVehicles, loadingUsers, loadingVehicles } = useData();
     const [recentUsers, setRecentUsers] = useState([]);
     const [stats, setStats] = useState([]);
     const [chartsData, setChartsData] = useState({
@@ -30,11 +30,11 @@ const Dashboard = () => {
     useEffect(() => {
         const loadAllData = async () => {
             try {
-                const [allUsers, firstVehicles] = await Promise.all([
+                const [allUsers, allVehicles] = await Promise.all([
                     fetchUsers(),
-                    fetchVehiclesPage(1)
+                    fetchVehicles()
                 ]);
-                processData(allUsers, firstVehicles);
+                processData(allUsers, allVehicles);
             } catch (error) {
                 console.error("Failed to fetch dashboard data", error);
             }

@@ -14,11 +14,10 @@ export const useData = () => {
 export const DataProvider = ({ children }) => {
     const [users, setUsers] = useState([]);
     const [vehicles, setVehicles] = useState([]);
-    const [vehiclePages, setVehiclePages] = useState({}); // Cache per page: { 1: [...], 2: [...] }
-    const [totalVehicles, setTotalVehicles] = useState(0);
     const [loadingUsers, setLoadingUsers] = useState(false);
     const [loadingVehicles, setLoadingVehicles] = useState(false);
     const [lastFetchUsers, setLastFetchUsers] = useState(0);
+    const [lastFetchVehicles, setLastFetchVehicles] = useState(0);
 
     const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
@@ -26,7 +25,6 @@ export const DataProvider = ({ children }) => {
     useEffect(() => {
         const savedUsers = sessionStorage.getItem('cached_users');
         const savedVehicles = sessionStorage.getItem('cached_vehicles');
-        const savedTotalVehicles = sessionStorage.getItem('cached_total_vehicles');
 
         if (savedUsers) {
             const { data, timestamp } = JSON.parse(savedUsers);
@@ -39,20 +37,15 @@ export const DataProvider = ({ children }) => {
         if (savedVehicles) {
             const { data, timestamp } = JSON.parse(savedVehicles);
             if (Date.now() - timestamp < CACHE_DURATION) {
-                setVehiclePages(data);
+                setVehicles(data);
+                setLastFetchVehicles(timestamp);
             }
-        }
-
-        if (savedTotalVehicles) {
-            setTotalVehicles(parseInt(savedTotalVehicles));
         }
     }, []);
 
     const fetchUsers = async (force = false) => {
         // If we have cached users, return them immediately but still fetch in the background
         if (!force && users.length > 0) {
-            // Trigger background fetch if it's been more than a short while or if force is false but we just want fresh data
-            // To prevent too many background calls, we check CACHE_DURATION
             if (Date.now() - lastFetchUsers > CACHE_DURATION / 5) { // Refresh if more than 1 minute old
                 performFetchUsers();
             }
@@ -78,43 +71,41 @@ export const DataProvider = ({ children }) => {
             }
         } catch (error) {
             console.error("Error fetching users:", error);
-            // Don't throw if we already have data (background refresh failed)
             if (users.length === 0) throw error;
         } finally {
             setLoadingUsers(false);
         }
     };
 
-    const fetchVehiclesPage = async (page = 1, force = false) => {
-        // If we have this page cached, return it immediately but trigger a background refresh
-        if (!force && vehiclePages[page]) {
-            // Background refresh if needed
-            performFetchVehiclesPage(page);
-            return vehiclePages[page];
+    const fetchVehicles = async (force = false) => {
+        if (!force && vehicles.length > 0) {
+            if (Date.now() - lastFetchVehicles > CACHE_DURATION / 5) {
+                performFetchVehicles();
+            }
+            return vehicles;
         }
 
-        return await performFetchVehiclesPage(page);
+        return await performFetchVehicles();
     };
 
-    const performFetchVehiclesPage = async (page) => {
+    const performFetchVehicles = async () => {
         setLoadingVehicles(true);
         try {
-            const response = await api.get(`/view/vehicles?page=${page}`);
+            // Using page=1 because the API seems to return everything regardless
+            const response = await api.get('/view/vehicles?page=1');
             if (response.success) {
                 const data = response.myvehicles || [];
-                setVehiclePages(prev => {
-                    const newPages = { ...prev, [page]: data };
-                    sessionStorage.setItem('cached_vehicles', JSON.stringify({
-                        data: newPages,
-                        timestamp: Date.now()
-                    }));
-                    return newPages;
-                });
+                setVehicles(data);
+                setLastFetchVehicles(Date.now());
+                sessionStorage.setItem('cached_vehicles', JSON.stringify({
+                    data,
+                    timestamp: Date.now()
+                }));
                 return data;
             }
         } catch (error) {
             console.error("Error fetching vehicles:", error);
-            if (!vehiclePages[page]) throw error;
+            if (vehicles.length === 0) throw error;
         } finally {
             setLoadingVehicles(false);
         }
@@ -124,17 +115,18 @@ export const DataProvider = ({ children }) => {
         sessionStorage.removeItem('cached_users');
         sessionStorage.removeItem('cached_vehicles');
         setUsers([]);
-        setVehiclePages({});
+        setVehicles([]);
         setLastFetchUsers(0);
+        setLastFetchVehicles(0);
     };
 
     const value = {
         users,
         loadingUsers,
         fetchUsers,
-        vehiclePages,
+        vehicles,
         loadingVehicles,
-        fetchVehiclesPage,
+        fetchVehicles,
         clearCache
     };
 
