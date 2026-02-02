@@ -18,6 +18,10 @@ const Agenda = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // Tooltip State
+    const [tooltipEvent, setTooltipEvent] = useState(null);
+    const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+
     useEffect(() => {
         const loadData = async () => {
             setLoading(true);
@@ -102,22 +106,41 @@ const Agenda = () => {
 
     // Map bookings to FullCalendar events
     const events = useMemo(() => {
-        return bookings.map(b => ({
-            id: String(b.id),
-            resourceId: String(b.vehicle_id),
-            start: b.start,
-            end: b.end,
-            title: `${b.status}`,
-            backgroundColor: b.status.toLowerCase() === 'confirmed' ? '#10B981' :
-                b.status.toLowerCase() === 'pending' ? '#F59E0B' :
-                    b.status.toLowerCase() === 'maintenance' ? '#6B7280' : '#EF4444',
-            borderColor: 'transparent',
-            extendedProps: {
-                status: b.status,
-                vehicle_id: b.vehicle_id
-            }
-        }));
-    }, [bookings]);
+        const getDuration = (start, end) => {
+            if (!start || !end) return '';
+            const diff = new Date(end) - new Date(start);
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            if (days > 0) return `${days}d ${hours > 0 ? ` ${hours}h` : ''}`;
+            return `${hours}h`;
+        };
+
+        return bookings.map(b => {
+            // Find vehicle info for tooltip
+            const vehicle = vehicles.find(v => String(v.id) === String(b.vehicle_id));
+            const vehicleName = vehicle
+                ? `${vehicle.brand} ${vehicle.model}`
+                : (b.vehicle_fullname || `Vehicle #${b.vehicle_id}`);
+
+            return {
+                id: String(b.id),
+                resourceId: String(b.vehicle_id),
+                start: b.start,
+                end: b.end,
+                title: `${b.status}`,
+                backgroundColor: b.status.toLowerCase() === 'confirmed' ? '#10B981' :
+                    b.status.toLowerCase() === 'pending' ? '#F59E0B' :
+                        b.status.toLowerCase() === 'maintenance' ? '#6B7280' : '#EF4444',
+                borderColor: 'transparent',
+                extendedProps: {
+                    status: b.status,
+                    vehicle_id: b.vehicle_id,
+                    vehicle_fullname: vehicleName,
+                    duration_human: getDuration(b.start, b.end)
+                }
+            };
+        });
+    }, [bookings, vehicles]);
 
     if (loading) {
         return (
