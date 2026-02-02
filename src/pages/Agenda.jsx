@@ -270,6 +270,7 @@ const Agenda = () => {
                         border-radius: 6px;
                         padding: 2px 0;
                         margin: 2px 0;
+                        cursor: pointer;
                     }
                 `}</style>
             </div>
