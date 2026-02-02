@@ -220,9 +220,10 @@ const Agenda = () => {
                         --fc-today-bg-color: #f0f7ff;
                         font-family: inherit;
                     }
-                    /* Highlight today's column in timeline */
-                    .fc-timeline-slot-today {
-                        background-color: #f0f7ff !important;
+                    /* Highlight today's column (header and body) */
+                    .fc .fc-timeline-slot-today,
+                    .fc .fc-day-today {
+                        background-color: #f0f9ff !important;
                     }
                     .fc .fc-now-indicator {
                         border-color: #3b82f6;
