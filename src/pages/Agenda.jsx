@@ -10,6 +10,7 @@ import Navbar from '../components/Navbar';
 import CalendarHeader from '../components/CalendarHeader';
 import VehicleRow from '../components/VehicleRow';
 import BookingEvent from '../components/BookingEvent';
+import BookingTooltip from '../components/BookingTooltip';
 
 const Agenda = () => {
     const [bookings, setBookings] = useState([]);
@@ -160,7 +161,7 @@ const Agenda = () => {
                 <CalendarHeader />
 
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="calendar-container">
+                    <div className="calendar-container relative">
                         <FullCalendar
                             plugins={[resourceTimelinePlugin, dayGridPlugin, interactionPlugin]}
                             initialView="resourceTimelineMonth"
@@ -176,11 +177,28 @@ const Agenda = () => {
                             schedulerLicenseKey="GPL-My-Project-Is-Open-Source"
                             eventContent={(eventInfo) => <BookingEvent eventInfo={eventInfo} />}
                             resourceLabelContent={(resourceInfo) => <VehicleRow resourceInfo={resourceInfo} />}
+
+                            // Updated Tooltip Logic
                             eventMouseEnter={(info) => {
-                                // Simple tooltip
-                                info.el.title = `Status: ${info.event.extendedProps.status}\nStarts: ${new Date(info.event.start).toLocaleString()}\nEnds: ${new Date(info.event.end).toLocaleString()}`;
+                                const rect = info.el.getBoundingClientRect();
+                                setTooltipPos({
+                                    x: rect.left + rect.width / 2,
+                                    y: rect.top
+                                });
+                                setTooltipEvent(info.event);
+                            }}
+                            eventMouseLeave={() => {
+                                setTooltipEvent(null);
                             }}
                         />
+
+                        {/* Render Floating Tooltip */}
+                        {tooltipEvent && (
+                            <BookingTooltip
+                                event={tooltipEvent}
+                                position={tooltipPos}
+                            />
+                        )}
                     </div>
                 </div>
 
