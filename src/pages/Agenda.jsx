@@ -186,6 +186,7 @@ const Agenda = () => {
                             events={events}
                             height="auto"
                             schedulerLicenseKey="GPL-My-Project-Is-Open-Source"
+                            nowIndicator={true}
                             eventContent={(eventInfo) => <BookingEvent eventInfo={eventInfo} />}
                             resourceLabelContent={(resourceInfo) => <VehicleRow resourceInfo={resourceInfo} />}
 
@@ -216,8 +217,16 @@ const Agenda = () => {
                 <style>{`
                     .fc {
                         --fc-border-color: #f3f4f6;
-                        --fc-today-bg-color: #eff6ff;
+                        --fc-today-bg-color: #f0f7ff;
                         font-family: inherit;
+                    }
+                    /* Highlight today's column in timeline */
+                    .fc-timeline-slot-today {
+                        background-color: #f0f7ff !important;
+                    }
+                    .fc .fc-now-indicator {
+                        border-color: #3b82f6;
+                        border-width: 2px;
                     }
                     .fc .fc-toolbar-title {
                         font-size: 1.25rem;
