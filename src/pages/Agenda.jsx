@@ -20,6 +20,10 @@ const Agenda = () => {
     const [loadingBookings, setLoadingBookings] = useState(true); // Only track booking loading
     const [error, setError] = useState(null);
 
+    // Filter & Search State
+    const [searchTerm, setSearchTerm] = useState('');
+    const [activeFilter, setActiveFilter] = useState('all');
+
     // Tooltip State
     const [tooltipEvent, setTooltipEvent] = useState(null);
     const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
@@ -84,17 +88,33 @@ const Agenda = () => {
             }
         });
 
-        return Array.from(vehicleMap.values()).sort((a, b) =>
+        let result = Array.from(vehicleMap.values());
+
+        // Apply Search Filter
+        if (searchTerm) {
+            const lowerSearch = searchTerm.toLowerCase();
+            result = result.filter(v =>
+                v.title.toLowerCase().includes(lowerSearch)
+            );
+        }
+
+        return result.sort((a, b) =>
             a.title.localeCompare(b.title)
         );
-    }, [vehicles, bookings]);
+    }, [vehicles, bookings, searchTerm]);
 
     // Map combined vehicles to FullCalendar resources
     const resources = useMemo(() => {
         return combinedVehicles;
     }, [combinedVehicles]);
 
-    // Map bookings to FullCalendar events
+    // Filtered Bookings for the calendar
+    const filteredBookings = useMemo(() => {
+        if (activeFilter === 'all') return bookings;
+        return bookings.filter(b => b.status.toLowerCase() === activeFilter.toLowerCase());
+    }, [bookings, activeFilter]);
+
+    // Map filtered bookings to FullCalendar events
     const events = useMemo(() => {
         const getDuration = (start, end) => {
             if (!start || !end) return '';
@@ -105,7 +125,7 @@ const Agenda = () => {
             return `${hours}h`;
         };
 
-        return bookings.map(b => {
+        return filteredBookings.map(b => {
             // Find vehicle info for tooltip
             const vehicle = vehicles.find(v => String(v.id) === String(b.vehicle_id));
             const vehicleName = vehicle
@@ -130,7 +150,7 @@ const Agenda = () => {
                 }
             };
         });
-    }, [bookings, vehicles]);
+    }, [filteredBookings, vehicles]);
 
     if (loadingBookings && bookings.length === 0) {
         return (
@@ -171,7 +191,12 @@ const Agenda = () => {
         <div className="min-h-screen bg-gray-50">
             <Navbar />
             <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto">
-                <CalendarHeader />
+                <CalendarHeader
+                    searchTerm={searchTerm}
+                    onSearchChange={setSearchTerm}
+                    activeFilter={activeFilter}
+                    onFilterChange={setActiveFilter}
+                />
 
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                     <div className="calendar-container relative">
