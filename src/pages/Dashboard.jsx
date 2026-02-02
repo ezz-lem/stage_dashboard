@@ -137,7 +137,7 @@ const Dashboard = () => {
         });
     };
 
-    if (isLoading && users.length === 0) {
+    if ((loadingUsers || loadingVehicles) && users.length === 0 && vehicles.length === 0) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>

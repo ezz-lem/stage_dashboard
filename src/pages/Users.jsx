@@ -152,7 +152,7 @@ const Users = () => {
                             <Table
                                 columns={columns}
                                 data={paginatedUsers}
-                                isLoading={loadingUsers}
+                                isLoading={loadingUsers && users.length === 0}
                                 keyField="id"
                                 pagination={{
                                     currentPage: currentPage,

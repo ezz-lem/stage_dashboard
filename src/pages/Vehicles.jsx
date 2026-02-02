@@ -117,7 +117,7 @@ const Vehicles = () => {
                             <Table
                                 columns={columns}
                                 data={filteredVehicles.slice((currentPage - 1) * 10, currentPage * 10)}
-                                isLoading={loadingVehicles}
+                                isLoading={loadingVehicles && vehicles.length === 0}
                                 keyField="id"
                                 pagination={{
                                     currentPage: currentPage,

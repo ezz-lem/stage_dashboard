@@ -12,10 +12,12 @@ import VehicleRow from '../components/VehicleRow';
 import BookingEvent from '../components/BookingEvent';
 import BookingTooltip from '../components/BookingTooltip';
 
+import { useData } from '../context/DataContext';
+
 const Agenda = () => {
+    const { vehicles, fetchVehicles } = useData(); // Use global vehicle data
     const [bookings, setBookings] = useState([]);
-    const [vehicles, setVehicles] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [loadingBookings, setLoadingBookings] = useState(true); // Only track booking loading
     const [error, setError] = useState(null);
 
     // Tooltip State
@@ -24,32 +26,18 @@ const Agenda = () => {
 
     useEffect(() => {
         const loadData = async () => {
-            setLoading(true);
+            setLoadingBookings(true);
             setError(null);
             try {
-                // 1. Fetch Vehicles for mapping (resources)
-                const vehiclesRes = await api.get('/get/allvehicles01');
-                console.log("Agenda Vehicles Response:", vehiclesRes); // Debug log for user
-
-                let vehiclesData = [];
-                if (Array.isArray(vehiclesRes)) {
-                    vehiclesData = vehiclesRes;
-                } else if (Array.isArray(vehiclesRes.myvehicles)) {
-                    vehiclesData = vehiclesRes.myvehicles;
-                } else if (Array.isArray(vehiclesRes.data)) {
-                    vehiclesData = vehiclesRes.data;
-                } else if (Array.isArray(vehiclesRes.records)) {
-                    vehiclesData = vehiclesRes.records;
-                }
-
-                setVehicles(vehiclesData);
+                // 1. Refresh Vehicles (background mostly constant)
+                fetchVehicles();
 
                 // 2. Fetch Bookings (events)
                 const bookingsRes = await api.post('/select/universal', {
                     table: "vehiclesbookings",
-                    select: ["id", "start", "end", "vehicle_id", "status"],
+                    select: ["id", "start", "end", "vehicle_id", "status", "vehicle_fullname"], // added vehicle_fullname
                     batch: 1,
-                    batch_size: 1000 // Fetch all items (total is ~600)
+                    batch_size: 1000
                 });
 
                 // The API returns data in 'records' field based on user example
@@ -65,7 +53,7 @@ const Agenda = () => {
                 console.error("Error loading agenda data:", err);
                 setError("Failed to load agenda data. Please try again later.");
             } finally {
-                setLoading(false);
+                setLoadingBookings(false);
             }
         };
 
@@ -76,7 +64,7 @@ const Agenda = () => {
     const combinedVehicles = useMemo(() => {
         const vehicleMap = new Map();
 
-        // 1. Add fetched vehicles
+        // 1. Add fetched vehicles from Context
         vehicles.forEach(v => {
             vehicleMap.set(String(v.id), {
                 id: String(v.id),
@@ -142,7 +130,7 @@ const Agenda = () => {
         });
     }, [bookings, vehicles]);
 
-    if (loading) {
+    if (loadingBookings && bookings.length === 0) {
         return (
             <div className="min-h-screen bg-gray-50 flex flex-col">
                 <Navbar />
