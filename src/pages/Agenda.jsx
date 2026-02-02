@@ -20,41 +20,65 @@ const Agenda = () => {
     const [loadingBookings, setLoadingBookings] = useState(true); // Only track booking loading
     const [error, setError] = useState(null);
 
-    // Filter, Search & Pagination State
+    // Filter, Search & Pagination State (Vehicles)
     const [searchTerm, setSearchTerm] = useState('');
-    const [activeFilter, setActiveFilter] = useState('all');
-    const [currentPage, setCurrentPage] = useState(1);
+    const [currentPage, setCurrentPage] = useState(1); // Vehicle page
     const itemsPerPage = 30;
+
+    // Booking Pagination & Filter State
+    const [bookingPage, setBookingPage] = useState(1);
+    const [totalBookingPages, setTotalBookingPages] = useState(1);
+    const [selectedBookingStatus, setSelectedBookingStatus] = useState('all');
 
     // Tooltip State
     const [tooltipEvent, setTooltipEvent] = useState(null);
     const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
 
     useEffect(() => {
-        // Reset to page 1 when search or filter changes
+        // Reset vehicle page to 1 when search changes
         setCurrentPage(1);
-    }, [searchTerm, activeFilter]);
+    }, [searchTerm]);
 
     useEffect(() => {
-        const loadData = async () => {
+        // Reset booking page to 1 when status filter changes
+        setBookingPage(1);
+    }, [selectedBookingStatus]);
+
+    // Fetch bookings whenever bookingPage or selectedBookingStatus changes
+    useEffect(() => {
+        const loadBookings = async () => {
             setLoadingBookings(true);
             setError(null);
             try {
-                // 1. Refresh Vehicles (background mostly constant)
+                // 1. Refresh Vehicles (background, mostly constant)
                 fetchVehicles();
 
-                // 2. Fetch Bookings (events)
-                const bookingsRes = await api.post('/select/universal', {
+                // 2. Fetch Bookings with pagination and optional status filter
+                const requestBody = {
                     table: "vehiclesbookings",
-                    select: ["id", "start", "end", "vehicle_id", "status", "vehicle_fullname"], // added vehicle_fullname
-                    batch: 1,
-                    batch_size: 1000
-                });
+                    select: ["id", "start", "end", "vehicle_id", "status", "vehicle_fullname"],
+                    batch: bookingPage,
+                    batch_size: 20
+                };
 
-                // The API returns data in 'records' field based on user example
+                // Add status filter if not 'all'
+                if (selectedBookingStatus !== 'all') {
+                    requestBody.where = {
+                        status: selectedBookingStatus
+                    };
+                }
+
+                const bookingsRes = await api.post('/select/universal', requestBody);
+
+                // The API returns data in 'records' field
                 const bookingsData = bookingsRes.success ? (bookingsRes.records || []) : [];
 
-                // Filter statuses: confirmed, pending, cancelled, maintenance
+                // Calculate total pages from API response
+                const totalItems = bookingsRes.total_items || bookingsData.length;
+                const calculatedPages = Math.ceil(totalItems / 20);
+                setTotalBookingPages(calculatedPages);
+
+                // Filter valid statuses
                 const filteredBookings = bookingsData.filter(b =>
                     ['confirmed', 'pending', 'cancelled', 'maintenance'].includes(b.status.toLowerCase())
                 );
@@ -68,8 +92,8 @@ const Agenda = () => {
             }
         };
 
-        loadData();
-    }, []);
+        loadBookings();
+    }, [bookingPage, selectedBookingStatus]);
 
     // Helper to get total pages and sliced data
     const { paginatedVehicles, totalPages } = useMemo(() => {
@@ -210,11 +234,14 @@ const Agenda = () => {
                 <CalendarHeader
                     searchTerm={searchTerm}
                     onSearchChange={setSearchTerm}
-                    activeFilter={activeFilter}
-                    onFilterChange={setActiveFilter}
+                    selectedBookingStatus={selectedBookingStatus}
+                    onBookingStatusChange={setSelectedBookingStatus}
                     currentPage={currentPage}
                     totalPages={totalPages}
                     onPageChange={setCurrentPage}
+                    bookingPage={bookingPage}
+                    totalBookingPages={totalBookingPages}
+                    onBookingPageChange={setBookingPage}
                 />
 
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">

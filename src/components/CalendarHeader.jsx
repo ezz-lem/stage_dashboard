@@ -3,11 +3,14 @@ import { Calendar as CalendarIcon, Search, X, ChevronLeft, ChevronRight } from '
 const CalendarHeader = ({
     searchTerm,
     onSearchChange,
-    activeFilter,
-    onFilterChange,
+    selectedBookingStatus,
+    onBookingStatusChange,
     currentPage,
     totalPages,
-    onPageChange
+    onPageChange,
+    bookingPage,
+    totalBookingPages,
+    onBookingPageChange
 }) => {
     const statuses = [
         {
@@ -51,24 +54,24 @@ const CalendarHeader = ({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-4">
-                    {/* Pagination Controls */}
+                    {/* Vehicle Pagination Controls */}
                     <div className="flex items-center bg-white border border-gray-200 rounded-xl px-1 py-1 shadow-sm">
                         <button
                             onClick={() => onPageChange(currentPage - 1)}
                             disabled={currentPage === 1}
                             className="p-1.5 rounded-lg hover:bg-gray-50 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
-                            title="Previous Page"
+                            title="Previous Vehicle Page"
                         >
                             <ChevronLeft className="w-5 h-5 text-gray-600" />
                         </button>
-                        <span className="px-3 text-sm font-bold text-gray-700 min-w-[80px] text-center">
-                            Page {currentPage} of {totalPages || 1}
+                        <span className="px-3 text-sm font-bold text-gray-700 min-w-[100px] text-center">
+                            Vehicles {currentPage}/{totalPages || 1}
                         </span>
                         <button
                             onClick={() => onPageChange(currentPage + 1)}
                             disabled={currentPage === totalPages || totalPages === 0}
                             className="p-1.5 rounded-lg hover:bg-gray-50 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
-                            title="Next Page"
+                            title="Next Vehicle Page"
                         >
                             <ChevronRight className="w-5 h-5 text-gray-600" />
                         </button>
@@ -95,30 +98,56 @@ const CalendarHeader = ({
                 </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-                <button
-                    onClick={() => onFilterChange('all')}
-                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${activeFilter === 'all'
-                        ? 'bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-200'
-                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
-                        }`}
-                >
-                    All Statuses
-                </button>
-                {statuses.map((status) => (
+            {/* Status Filter & Booking Pagination */}
+            <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex flex-wrap items-center gap-2">
                     <button
-                        key={status.id}
-                        onClick={() => onFilterChange(status.id)}
-                        className={`flex items-center px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${activeFilter === status.id
-                            ? status.activeClass
-                            : status.inactiveClass
-                            }`}
+                        onClick={() => onBookingStatusChange('all')}
+                        className={`px - 3 py - 1.5 rounded - full text - xs font - semibold transition - all border ${selectedBookingStatus === 'all'
+                                ? 'bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-200'
+                                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                            } `}
                     >
-                        <span className={`w-2 h-2 rounded-full mr-2 ${activeFilter === status.id ? 'bg-white' : status.dotClass
-                            }`}></span>
-                        {status.label}
+                        All Statuses
                     </button>
-                ))}
+                    {statuses.map((status) => (
+                        <button
+                            key={status.id}
+                            onClick={() => onBookingStatusChange(status.id)}
+                            className={`flex items - center px - 3 py - 1.5 rounded - full text - xs font - semibold transition - all border ${selectedBookingStatus === status.id
+                                    ? status.activeClass
+                                    : status.inactiveClass
+                                } `}
+                        >
+                            <span className={`w - 2 h - 2 rounded - full mr - 2 ${selectedBookingStatus === status.id ? 'bg-white' : status.dotClass
+                                } `}></span>
+                            {status.label}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Booking Pagination Controls */}
+                <div className="flex items-center bg-white border border-gray-200 rounded-xl px-1 py-1 shadow-sm">
+                    <button
+                        onClick={() => onBookingPageChange(bookingPage - 1)}
+                        disabled={bookingPage === 1}
+                        className="p-1.5 rounded-lg hover:bg-gray-50 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                        title="Previous Booking Page"
+                    >
+                        <ChevronLeft className="w-5 h-5 text-gray-600" />
+                    </button>
+                    <span className="px-3 text-sm font-bold text-gray-700 min-w-[100px] text-center">
+                        Bookings {bookingPage}/{totalBookingPages || 1}
+                    </span>
+                    <button
+                        onClick={() => onBookingPageChange(bookingPage + 1)}
+                        disabled={bookingPage === totalBookingPages || totalBookingPages === 0}
+                        className="p-1.5 rounded-lg hover:bg-gray-50 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+                        title="Next Booking Page"
+                    >
+                        <ChevronRight className="w-5 h-5 text-gray-600" />
+                    </button>
+                </div>
             </div>
         </div>
     );
