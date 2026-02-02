@@ -63,10 +63,29 @@ export const DataProvider = ({ children }) => {
                 const data = response.myusers || [];
                 setUsers(data);
                 setLastFetchUsers(Date.now());
-                sessionStorage.setItem('cached_users', JSON.stringify({
-                    data,
-                    timestamp: Date.now()
+
+                // Trim data for persistent cache (stay under 5MB quota)
+                const trimmedData = data.map(u => ({
+                    id: u.id,
+                    first_name: u.first_name,
+                    last_name: u.last_name,
+                    username: u.username,
+                    email: u.email,
+                    tel: u.tel,
+                    role_name: u.role_name,
+                    enabled: u.enabled,
+                    profile_photo_url: u.profile_photo_url,
+                    created_at: u.created_at
                 }));
+
+                try {
+                    sessionStorage.setItem('cached_users', JSON.stringify({
+                        data: trimmedData,
+                        timestamp: Date.now()
+                    }));
+                } catch (e) {
+                    console.warn("SessionStorage quota exceeded for users, skipping cache", e);
+                }
                 return data;
             }
         } catch (error) {
@@ -97,10 +116,26 @@ export const DataProvider = ({ children }) => {
                 const data = response.myvehicles || [];
                 setVehicles(data);
                 setLastFetchVehicles(Date.now());
-                sessionStorage.setItem('cached_vehicles', JSON.stringify({
-                    data,
-                    timestamp: Date.now()
+
+                // Trim vehicles for cache
+                const trimmedData = data.map(v => ({
+                    id: v.id,
+                    brand: v.brand,
+                    model: v.model,
+                    matricule: v.matricule,
+                    vin: v.vin,
+                    driver_fullname: v.driver_fullname,
+                    status: v.status
                 }));
+
+                try {
+                    sessionStorage.setItem('cached_vehicles', JSON.stringify({
+                        data: trimmedData,
+                        timestamp: Date.now()
+                    }));
+                } catch (e) {
+                    console.warn("SessionStorage quota exceeded for vehicles, skipping cache", e);
+                }
                 return data;
             }
         } catch (error) {
