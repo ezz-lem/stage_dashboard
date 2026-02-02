@@ -6,6 +6,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import { api } from '../api/apiClient';
 import Loader from '../components/Loader';
 import { AlertCircle } from 'lucide-react';
+import Navbar from '../components/Navbar';
 import CalendarHeader from '../components/CalendarHeader';
 import VehicleRow from '../components/VehicleRow';
 import BookingEvent from '../components/BookingEvent';
@@ -23,7 +24,19 @@ const Agenda = () => {
             try {
                 // 1. Fetch Vehicles for mapping (resources)
                 const vehiclesRes = await api.get('/get/allvehicles01');
-                const vehiclesData = vehiclesRes.myvehicles || [];
+                console.log("Agenda Vehicles Response:", vehiclesRes); // Debug log for user
+
+                let vehiclesData = [];
+                if (Array.isArray(vehiclesRes)) {
+                    vehiclesData = vehiclesRes;
+                } else if (Array.isArray(vehiclesRes.myvehicles)) {
+                    vehiclesData = vehiclesRes.myvehicles;
+                } else if (Array.isArray(vehiclesRes.data)) {
+                    vehiclesData = vehiclesRes.data;
+                } else if (Array.isArray(vehiclesRes.records)) {
+                    vehiclesData = vehiclesRes.records;
+                }
+
                 setVehicles(vehiclesData);
 
                 // 2. Fetch Bookings (events)
@@ -82,107 +95,118 @@ const Agenda = () => {
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh]">
-                <Loader size={40} />
-                <p className="mt-4 text-gray-500 font-medium">Loading agenda...</p>
+            <div className="min-h-screen bg-gray-50 flex flex-col">
+                <Navbar />
+                <div className="flex-1 flex flex-col items-center justify-center">
+                    <Loader size={40} />
+                    <p className="mt-4 text-gray-500 font-medium">Loading agenda...</p>
+                </div>
             </div>
         );
     }
 
     if (error) {
         return (
-            <div className="max-w-2xl mx-auto mt-12 p-6 bg-red-50 rounded-xl border border-red-100 flex items-start">
-                <AlertCircle className="w-6 h-6 text-red-500 mr-4 flex-shrink-0" />
-                <div>
-                    <h3 className="text-red-800 font-bold text-lg">Error</h3>
-                    <p className="text-red-600 mt-1">{error}</p>
-                    <button
-                        onClick={() => window.location.reload()}
-                        className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                    >
-                        Retry
-                    </button>
+            <div className="min-h-screen bg-gray-50 flex flex-col">
+                <Navbar />
+                <div className="flex-1 p-8">
+                    <div className="max-w-2xl mx-auto p-6 bg-red-50 rounded-xl border border-red-100 flex items-start">
+                        <AlertCircle className="w-6 h-6 text-red-500 mr-4 flex-shrink-0" />
+                        <div>
+                            <h3 className="text-red-800 font-bold text-lg">Error</h3>
+                            <p className="text-red-600 mt-1">{error}</p>
+                            <button
+                                onClick={() => window.location.reload()}
+                                className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                            >
+                                Retry
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto">
-            <CalendarHeader />
+        <div className="min-h-screen bg-gray-50">
+            <Navbar />
+            <div className="p-4 sm:p-6 lg:p-8 max-w-[1600px] mx-auto">
+                <CalendarHeader />
 
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="calendar-container">
-                    <FullCalendar
-                        plugins={[resourceTimelinePlugin, dayGridPlugin, interactionPlugin]}
-                        initialView="resourceTimelineMonth"
-                        headerToolbar={{
-                            left: 'prev,next today',
-                            center: 'title',
-                            right: 'resourceTimelineMonth,resourceTimelineWeek,resourceTimelineDay'
-                        }}
-                        resourceAreaHeaderContent="Vehicles"
-                        resources={resources}
-                        events={events}
-                        height="auto"
-                        schedulerLicenseKey="GPL-My-Project-Is-Open-Source"
-                        eventContent={(eventInfo) => <BookingEvent eventInfo={eventInfo} />}
-                        resourceLabelContent={(resourceInfo) => <VehicleRow resourceInfo={resourceInfo} />}
-                        eventMouseEnter={(info) => {
-                            // Simple tooltip implementation using element title or we could use a custom component
-                            info.el.title = `Status: ${info.event.extendedProps.status}\nStarts: ${new Date(info.event.start).toLocaleString()}\nEnds: ${new Date(info.event.end).toLocaleString()}`;
-                        }}
-                    />
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="calendar-container">
+                        <FullCalendar
+                            plugins={[resourceTimelinePlugin, dayGridPlugin, interactionPlugin]}
+                            initialView="resourceTimelineMonth"
+                            headerToolbar={{
+                                left: 'prev,next today',
+                                center: 'title',
+                                right: 'resourceTimelineMonth,resourceTimelineWeek,resourceTimelineDay'
+                            }}
+                            resourceAreaHeaderContent="Vehicles"
+                            resources={resources}
+                            events={events}
+                            height="auto"
+                            schedulerLicenseKey="GPL-My-Project-Is-Open-Source"
+                            eventContent={(eventInfo) => <BookingEvent eventInfo={eventInfo} />}
+                            resourceLabelContent={(resourceInfo) => <VehicleRow resourceInfo={resourceInfo} />}
+                            eventMouseEnter={(info) => {
+                                // Simple tooltip
+                                info.el.title = `Status: ${info.event.extendedProps.status}\nStarts: ${new Date(info.event.start).toLocaleString()}\nEnds: ${new Date(info.event.end).toLocaleString()}`;
+                            }}
+                        />
+                    </div>
                 </div>
-            </div>
 
-            <style>{`
-                .fc {
-                    --fc-border-color: #f3f4f6;
-                    --fc-today-bg-color: #eff6ff;
-                    font-family: inherit;
-                }
-                .fc .fc-toolbar-title {
-                    font-size: 1.25rem;
-                    font-weight: 700;
-                    color: #111827;
-                }
-                .fc .fc-button-primary {
-                    background-color: white;
-                    border-color: #e5e7eb;
-                    color: #374151;
-                    font-weight: 500;
-                    text-transform: capitalize;
-                }
-                .fc .fc-button-primary:hover {
-                    background-color: #f9fafb;
-                    border-color: #d1d5db;
-                    color: #111827;
-                }
-                .fc .fc-button-primary:not(:disabled).fc-button-active, 
-                .fc .fc-button-primary:not(:disabled):active {
-                    background-color: #eff6ff;
-                    border-color: #3b82f6;
-                    color: #2563eb;
-                }
-                .fc-timeline-header-row {
-                    background-color: #f9fafb;
-                }
-                .fc-resource-area-header-cell {
-                    font-weight: 700;
-                    color: #374151;
-                    padding: 10px !important;
-                }
-                .fc-datagrid-cell-cushion {
-                    padding: 12px !important;
-                    font-weight: 500;
-                }
-                .fc-timeline-event {
-                    border-radius: 6px;
-                    padding: 2px 0;
-                    margin: 2px 0;
-                }
-            `}</style>
+                <style>{`
+                    .fc {
+                        --fc-border-color: #f3f4f6;
+                        --fc-today-bg-color: #eff6ff;
+                        font-family: inherit;
+                    }
+                    .fc .fc-toolbar-title {
+                        font-size: 1.25rem;
+                        font-weight: 700;
+                        color: #111827;
+                    }
+                    .fc .fc-button-primary {
+                        background-color: white;
+                        border-color: #e5e7eb;
+                        color: #374151;
+                        font-weight: 500;
+                        text-transform: capitalize;
+                    }
+                    .fc .fc-button-primary:hover {
+                        background-color: #f9fafb;
+                        border-color: #d1d5db;
+                        color: #111827;
+                    }
+                    .fc .fc-button-primary:not(:disabled).fc-button-active, 
+                    .fc .fc-button-primary:not(:disabled):active {
+                        background-color: #eff6ff;
+                        border-color: #3b82f6;
+                        color: #2563eb;
+                    }
+                    .fc-timeline-header-row {
+                        background-color: #f9fafb;
+                    }
+                    .fc-resource-area-header-cell {
+                        font-weight: 700;
+                        color: #374151;
+                        padding: 10px !important;
+                    }
+                    .fc-datagrid-cell-cushion {
+                        padding: 12px !important;
+                        font-weight: 500;
+                    }
+                    .fc-timeline-event {
+                        border-radius: 6px;
+                        padding: 2px 0;
+                        margin: 2px 0;
+                    }
+                `}</style>
+            </div>
         </div>
     );
 };
