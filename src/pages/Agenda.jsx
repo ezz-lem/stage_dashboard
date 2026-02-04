@@ -50,6 +50,7 @@ const Agenda = () => {
     useEffect(() => {
         const loadBookings = async () => {
             setLoadingBookings(true);
+            setBookings([]); // Clear old bookings while loading new batch
             setError(null);
             try {
                 // 1. Refresh Vehicles (background, mostly constant)
@@ -244,6 +245,7 @@ const Agenda = () => {
                             }}
                             resourceAreaHeaderContent="Vehicles"
                             resources={resources}
+                            resourceOrder={false} // Prevent sorting by ID, preserve API order
                             events={events}
                             height="auto"
                             schedulerLicenseKey="GPL-My-Project-Is-Open-Source"
