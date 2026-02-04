@@ -169,7 +169,10 @@ const Agenda = () => {
         });
     }, [bookings, selectedBookingStatus, resources]);
 
-    if (isPending) {
+    // Only show the full-page "Initial" loader if we have NO data at all
+    // isPending is true on every key change if not yet cached, but bookingsRes 
+    // stays populated thanks to keepPreviousData.
+    if (!bookingsRes && isPending) {
         return (
             <div className="min-h-screen bg-gray-50 flex flex-col">
                 <Navbar />
