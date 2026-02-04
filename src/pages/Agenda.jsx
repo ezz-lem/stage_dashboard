@@ -14,16 +14,24 @@ import BookingTooltip from '../components/BookingTooltip';
 
 import { useData } from '../context/DataContext';
 
+// Status colors configuration
+const STATUS_COLORS = {
+    confirmed: '#10B981',  // Green
+    pending: '#F59E0B',     // Amber
+    maintenance: '#6B7280', // Gray
+    cancelled: '#EF4444',   // Red
+};
+
 const Agenda = () => {
     const { vehicles, fetchVehicles } = useData(); // Use global vehicle data
     const [bookings, setBookings] = useState([]);
     const [loadingBookings, setLoadingBookings] = useState(true); // Only track booking loading
     const [error, setError] = useState(null);
 
-    // Filter, Search & Pagination State (Vehicles)
+    // Filter, Search & Vehicle Pagination State
     const [searchTerm, setSearchTerm] = useState('');
-    const [currentPage, setCurrentPage] = useState(1); // Vehicle page
-    const itemsPerPage = 30;
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 20; // Match booking batch size
 
     // Booking Pagination & Filter State
     const [bookingPage, setBookingPage] = useState(1);
@@ -86,7 +94,10 @@ const Agenda = () => {
                 setBookings(filteredBookings);
             } catch (err) {
                 console.error("Error loading agenda data:", err);
-                setError("Failed to load agenda data. Please try again later.");
+                const errorMessage = err.response?.data?.message
+                    || err.response?.data?.error
+                    || "Failed to load agenda data. Please try again later.";
+                setError(errorMessage);
             } finally {
                 setLoadingBookings(false);
             }
@@ -95,8 +106,8 @@ const Agenda = () => {
         loadBookings();
     }, [bookingPage, selectedBookingStatus]);
 
-    // Helper to get total pages and sliced data
-    const { paginatedVehicles, totalPages } = useMemo(() => {
+    // Build vehicle resources with pagination
+    const { resources, totalPages } = useMemo(() => {
         const vehicleMap = new Map();
 
         // 1. Add fetched vehicles from Context
@@ -111,7 +122,6 @@ const Agenda = () => {
         bookings.forEach(b => {
             const vId = String(b.vehicle_id);
             if (!vehicleMap.has(vId)) {
-                // If detailed info is missing, use fullname or fallback
                 vehicleMap.set(vId, {
                     id: vId,
                     title: b.vehicle_fullname || `Vehicle #${vId}`
@@ -132,27 +142,25 @@ const Agenda = () => {
         // Sort A-Z
         result.sort((a, b) => a.title.localeCompare(b.title));
 
+        // Calculate pagination
         const totalItems = result.length;
         const total = Math.ceil(totalItems / itemsPerPage);
 
         // Slice for current page
         const start = (currentPage - 1) * itemsPerPage;
         const end = start + itemsPerPage;
-        const sliced = result.slice(start, end);
+        const paginated = result.slice(start, end);
 
-        return { paginatedVehicles: sliced, totalPages: total };
+        return { resources: paginated, totalPages: total };
     }, [vehicles, bookings, searchTerm, currentPage, itemsPerPage]);
-
-    // Map paginated vehicles to FullCalendar resources
-    const resources = useMemo(() => {
-        return paginatedVehicles;
-    }, [paginatedVehicles]);
 
     // Filtered Bookings for the calendar
     const filteredBookings = useMemo(() => {
-        if (activeFilter === 'all') return bookings;
-        return bookings.filter(b => b.status.toLowerCase() === activeFilter.toLowerCase());
-    }, [bookings, activeFilter]);
+        if (selectedBookingStatus === 'all') return bookings;
+        return bookings.filter(b =>
+            b.status && b.status.toLowerCase() === selectedBookingStatus.toLowerCase()
+        );
+    }, [bookings, selectedBookingStatus]);
 
     // Map filtered bookings to FullCalendar events
     const events = useMemo(() => {
@@ -178,9 +186,7 @@ const Agenda = () => {
                 start: b.start,
                 end: b.end,
                 title: `${b.status}`,
-                backgroundColor: b.status.toLowerCase() === 'confirmed' ? '#10B981' :
-                    b.status.toLowerCase() === 'pending' ? '#F59E0B' :
-                        b.status.toLowerCase() === 'maintenance' ? '#6B7280' : '#EF4444',
+                backgroundColor: STATUS_COLORS[b.status?.toLowerCase()] || '#3B82F6',
                 borderColor: 'transparent',
                 extendedProps: {
                     status: b.status,
@@ -236,9 +242,6 @@ const Agenda = () => {
                     onSearchChange={setSearchTerm}
                     selectedBookingStatus={selectedBookingStatus}
                     onBookingStatusChange={setSelectedBookingStatus}
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={setCurrentPage}
                     bookingPage={bookingPage}
                     totalBookingPages={totalBookingPages}
                     onBookingPageChange={setBookingPage}
@@ -292,7 +295,6 @@ const Agenda = () => {
                         --fc-today-bg-color: #f0f7ff;
                         font-family: inherit;
                     }
-                    /* Highlight today's column (header and body) */
                     .fc .fc-timeline-slot-today,
                     .fc .fc-day-today {
                         background-color: #f0f9ff !important;

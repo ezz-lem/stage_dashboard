@@ -54,29 +54,6 @@ const CalendarHeader = ({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-4">
-                    {/* Vehicle Pagination Controls */}
-                    <div className="flex items-center bg-white border border-gray-200 rounded-xl px-1 py-1 shadow-sm">
-                        <button
-                            onClick={() => onPageChange(currentPage - 1)}
-                            disabled={currentPage === 1}
-                            className="p-1.5 rounded-lg hover:bg-gray-50 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
-                            title="Previous Vehicle Page"
-                        >
-                            <ChevronLeft className="w-5 h-5 text-gray-600" />
-                        </button>
-                        <span className="px-3 text-sm font-bold text-gray-700 min-w-[100px] text-center">
-                            Vehicles {currentPage}/{totalPages || 1}
-                        </span>
-                        <button
-                            onClick={() => onPageChange(currentPage + 1)}
-                            disabled={currentPage === totalPages || totalPages === 0}
-                            className="p-1.5 rounded-lg hover:bg-gray-50 disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
-                            title="Next Vehicle Page"
-                        >
-                            <ChevronRight className="w-5 h-5 text-gray-600" />
-                        </button>
-                    </div>
-
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                         <input
@@ -104,8 +81,8 @@ const CalendarHeader = ({
                     <button
                         onClick={() => onBookingStatusChange('all')}
                         className={`px - 3 py - 1.5 rounded - full text - xs font - semibold transition - all border ${selectedBookingStatus === 'all'
-                                ? 'bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-200'
-                                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-200'
+                            : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
                             } `}
                     >
                         All Statuses
@@ -115,8 +92,8 @@ const CalendarHeader = ({
                             key={status.id}
                             onClick={() => onBookingStatusChange(status.id)}
                             className={`flex items - center px - 3 py - 1.5 rounded - full text - xs font - semibold transition - all border ${selectedBookingStatus === status.id
-                                    ? status.activeClass
-                                    : status.inactiveClass
+                                ? status.activeClass
+                                : status.inactiveClass
                                 } `}
                         >
                             <span className={`w - 2 h - 2 rounded - full mr - 2 ${selectedBookingStatus === status.id ? 'bg-white' : status.dotClass
