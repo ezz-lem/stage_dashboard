@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import FullCalendar from '@fullcalendar/react';
 import resourceTimelinePlugin from '@fullcalendar/resource-timeline';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -22,83 +23,71 @@ const STATUS_COLORS = {
     cancelled: '#EF4444',   // Red
 };
 
+// Query function for bookings
+const fetchBookings = async ({ queryKey }) => {
+    const [_key, page, status] = queryKey;
+    const requestBody = {
+        table: "vehiclesbookings",
+        select: ["id", "start", "end", "vehicle_id", "status", "vehicle_fullname"],
+        batch: page,
+        batch_size: 20
+    };
+
+    if (status !== 'all') {
+        requestBody.where = { status };
+    }
+
+    const response = await api.post('/select/universal', requestBody);
+    if (!response.success) throw new Error(response.message || 'Failed to fetch bookings');
+
+    // Filter valid statuses
+    const records = (response.records || []).filter(b =>
+        ['confirmed', 'pending', 'cancelled', 'maintenance'].includes(b.status?.toLowerCase())
+    );
+
+    const totalItems = response.total_items || records.length;
+    const totalPages = Math.ceil(totalItems / 20);
+
+    return { records, totalPages };
+};
+
 const Agenda = () => {
-    const { vehicles, fetchVehicles } = useData(); // Use global vehicle data
-    const [bookings, setBookings] = useState([]);
-    const [loadingBookings, setLoadingBookings] = useState(true); // Only track booking loading
-    const [error, setError] = useState(null);
+    const { vehicles, fetchVehicles } = useData();
 
-    // Filter, Search State
+    // UI State
     const [searchTerm, setSearchTerm] = useState('');
-
-    // Booking Pagination & Filter State
     const [bookingPage, setBookingPage] = useState(1);
-    const [totalBookingPages, setTotalBookingPages] = useState(1);
     const [selectedBookingStatus, setSelectedBookingStatus] = useState('all');
-
-    // Tooltip State
     const [tooltipEvent, setTooltipEvent] = useState(null);
     const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
 
+    // UseQuery Hook for Bookings
+    const {
+        data: bookingsRes,
+        isPending,
+        isError,
+        error: queryError,
+        isFetching,
+        placeholderData
+    } = useQuery({
+        queryKey: ['bookings', bookingPage, selectedBookingStatus],
+        queryFn: fetchBookings,
+        placeholderData: keepPreviousData,
+        staleTime: 60 * 1000,
+    });
+
+    const bookings = bookingsRes?.records || [];
+    const totalBookingPages = bookingsRes?.totalPages || 1;
+
+    useEffect(() => {
+        // Refresh vehicles in background
+        fetchVehicles();
+    }, [fetchVehicles]);
 
     useEffect(() => {
         // Reset booking page to 1 when status filter changes
         setBookingPage(1);
     }, [selectedBookingStatus]);
-
-    // Fetch bookings whenever bookingPage or selectedBookingStatus changes
-    useEffect(() => {
-        const loadBookings = async () => {
-            setLoadingBookings(true);
-            setError(null);
-            try {
-                // 1. Refresh Vehicles (background, mostly constant)
-                fetchVehicles();
-
-                // 2. Fetch Bookings with pagination and optional status filter
-                const requestBody = {
-                    table: "vehiclesbookings",
-                    select: ["id", "start", "end", "vehicle_id", "status", "vehicle_fullname"],
-                    batch: bookingPage,
-                    batch_size: 20
-                };
-
-                // Add status filter if not 'all'
-                if (selectedBookingStatus !== 'all') {
-                    requestBody.where = {
-                        status: selectedBookingStatus
-                    };
-                }
-
-                const bookingsRes = await api.post('/select/universal', requestBody);
-
-                // The API returns data in 'records' field
-                const bookingsData = bookingsRes.success ? (bookingsRes.records || []) : [];
-
-                // Calculate total pages from API response
-                const totalItems = bookingsRes.total_items || bookingsData.length;
-                const calculatedPages = Math.ceil(totalItems / 20);
-                setTotalBookingPages(calculatedPages);
-
-                // Filter valid statuses
-                const filteredBookings = bookingsData.filter(b =>
-                    ['confirmed', 'pending', 'cancelled', 'maintenance'].includes(b.status.toLowerCase())
-                );
-
-                setBookings(filteredBookings);
-            } catch (err) {
-                console.error("Error loading agenda data:", err);
-                const errorMessage = err.response?.data?.message
-                    || err.response?.data?.error
-                    || "Failed to load agenda data. Please try again later.";
-                setError(errorMessage);
-            } finally {
-                setLoadingBookings(false);
-            }
-        };
-
-        loadBookings();
-    }, [bookingPage, selectedBookingStatus]);
 
     // Build vehicle resources based on current bookings only
     const { resources, totalPages } = useMemo(() => {
@@ -180,7 +169,7 @@ const Agenda = () => {
         });
     }, [bookings, selectedBookingStatus, resources]);
 
-    if (loadingBookings && bookings.length === 0) {
+    if (isPending) {
         return (
             <div className="min-h-screen bg-gray-50 flex flex-col">
                 <Navbar />
@@ -192,7 +181,7 @@ const Agenda = () => {
         );
     }
 
-    if (error) {
+    if (isError) {
         return (
             <div className="min-h-screen bg-gray-50 flex flex-col">
                 <Navbar />
@@ -201,7 +190,7 @@ const Agenda = () => {
                         <AlertCircle className="w-6 h-6 text-red-500 mr-4 flex-shrink-0" />
                         <div>
                             <h3 className="text-red-800 font-bold text-lg">Error</h3>
-                            <p className="text-red-600 mt-1">{error}</p>
+                            <p className="text-red-600 mt-1">{queryError?.message || "Something went wrong"}</p>
                             <button
                                 onClick={() => window.location.reload()}
                                 className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
@@ -231,7 +220,7 @@ const Agenda = () => {
 
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative">
                     {/* Subtle Loading Overlay */}
-                    {loadingBookings && bookings.length > 0 && (
+                    {isFetching && bookings.length > 0 && (
                         <div className="absolute inset-0 bg-white/40 backdrop-blur-[1px] z-10 flex items-center justify-center transition-all duration-300">
                             <div className="bg-white/80 px-4 py-2 rounded-full shadow-lg border border-gray-100 flex items-center gap-3">
                                 <Loader size={20} />
