@@ -103,22 +103,21 @@ const Agenda = () => {
 
     // Build vehicle resources based on current bookings only
     const { resources, totalPages } = useMemo(() => {
-        // Only show vehicles that have bookings in the current batch
         const vehicleMap = new Map();
-        const vehicleOrder = []; // Track order of first appearance
+        const vehicleOrder = [];
 
-        // Build vehicles from current bookings only
         bookings.forEach(b => {
             const vId = String(b.vehicle_id);
             if (!vehicleMap.has(vId)) {
-                // Try to get full vehicle info from context
                 const fullVehicle = vehicles.find(v => String(v.id) === vId);
 
-                // Prioritize the name from the booking record if available
+                // Track original vehicle_id but use index for sorting ID
+                const indexId = String(vehicleOrder.length).padStart(4, '0');
+
                 const vehicleInfo = {
-                    id: vId,
-                    title: b.vehicle_fullname || (fullVehicle ? `${fullVehicle.brand} ${fullVehicle.model} (${fullVehicle.matricule})` : `Vehicle #${vId}`),
-                    sortOrder: vehicleOrder.length // Use current length as index for sorting
+                    id: indexId, // FORCED ORDER ID (0000, 0001...)
+                    original_id: vId,
+                    title: b.vehicle_fullname || (fullVehicle ? `${fullVehicle.brand} ${fullVehicle.model} (${fullVehicle.matricule})` : `Vehicle #${vId}`)
                 };
 
                 vehicleMap.set(vId, vehicleInfo);
@@ -126,7 +125,7 @@ const Agenda = () => {
             }
         });
 
-        let result = vehicleOrder; // Use order of first booking appearance
+        let result = vehicleOrder;
 
         // Apply Search Filter
         if (searchTerm) {
@@ -136,18 +135,8 @@ const Agenda = () => {
             );
         }
 
-        // No pagination needed - show all vehicles from current booking batch
-        // Total pages is controlled by booking pagination
         return { resources: result, totalPages: totalBookingPages };
     }, [vehicles, bookings, searchTerm, totalBookingPages]);
-
-    // Filtered Bookings for the calendar
-    const filteredBookings = useMemo(() => {
-        if (selectedBookingStatus === 'all') return bookings;
-        return bookings.filter(b =>
-            b.status && b.status.toLowerCase() === selectedBookingStatus.toLowerCase()
-        );
-    }, [bookings, selectedBookingStatus]);
 
     // Map filtered bookings to FullCalendar events
     const events = useMemo(() => {
@@ -160,16 +149,23 @@ const Agenda = () => {
             return `${hours}h`;
         };
 
-        return filteredBookings.map(b => {
-            // Find vehicle info for tooltip
-            const vehicle = vehicles.find(v => String(v.id) === String(b.vehicle_id));
-            const vehicleName = vehicle
-                ? `${vehicle.brand} ${vehicle.model}`
-                : (b.vehicle_fullname || `Vehicle #${b.vehicle_id}`);
+        // Filtered Bookings for the calendar
+        const currentFiltered = selectedBookingStatus === 'all'
+            ? bookings
+            : bookings.filter(b => b.status && b.status.toLowerCase() === selectedBookingStatus.toLowerCase());
+
+        return currentFiltered.map(b => {
+            const vId = String(b.vehicle_id);
+
+            // WE MUST FIND THE SYNCED ID (e.g. "0000") for this booking
+            const resource = resources.find(r => r.original_id === vId);
+            const resourceId = resource ? resource.id : vId;
+
+            const vehicleName = resource ? resource.title : (b.vehicle_fullname || `Vehicle #${vId}`);
 
             return {
-                id: String(b.id),
-                resourceId: String(b.vehicle_id),
+                id: `booking-${b.id}`,
+                resourceId: resourceId,
                 start: b.start,
                 end: b.end,
                 title: `${b.status}`,
@@ -183,7 +179,7 @@ const Agenda = () => {
                 }
             };
         });
-    }, [filteredBookings, vehicles]);
+    }, [bookings, selectedBookingStatus, resources]);
 
     if (loadingBookings && bookings.length === 0) {
         return (
@@ -246,7 +242,7 @@ const Agenda = () => {
                             }}
                             resourceAreaHeaderContent="Vehicles"
                             resources={resources}
-                            resourceOrder="sortOrder" // Force sorting by our arrival-order index
+                            resourceOrder="id" // Force sorting by our zero-padded index IDs (0000, 0001...)
                             events={events}
                             height="auto"
                             schedulerLicenseKey="GPL-My-Project-Is-Open-Source"
