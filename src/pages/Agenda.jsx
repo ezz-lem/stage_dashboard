@@ -117,7 +117,8 @@ const Agenda = () => {
                 // Prioritize the name from the booking record if available
                 const vehicleInfo = {
                     id: vId,
-                    title: b.vehicle_fullname || (fullVehicle ? `${fullVehicle.brand} ${fullVehicle.model} (${fullVehicle.matricule})` : `Vehicle #${vId}`)
+                    title: b.vehicle_fullname || (fullVehicle ? `${fullVehicle.brand} ${fullVehicle.model} (${fullVehicle.matricule})` : `Vehicle #${vId}`),
+                    sortOrder: vehicleOrder.length // Use current length as index for sorting
                 };
 
                 vehicleMap.set(vId, vehicleInfo);
@@ -245,7 +246,7 @@ const Agenda = () => {
                             }}
                             resourceAreaHeaderContent="Vehicles"
                             resources={resources}
-                            resourceOrder={false} // Prevent sorting by ID, preserve API order
+                            resourceOrder="sortOrder" // Force sorting by our arrival-order index
                             events={events}
                             height="auto"
                             schedulerLicenseKey="GPL-My-Project-Is-Open-Source"
