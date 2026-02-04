@@ -5,9 +5,6 @@ const CalendarHeader = ({
     onSearchChange,
     selectedBookingStatus,
     onBookingStatusChange,
-    currentPage,
-    totalPages,
-    onPageChange,
     bookingPage,
     totalBookingPages,
     onBookingPageChange
@@ -80,10 +77,10 @@ const CalendarHeader = ({
                 <div className="flex flex-wrap items-center gap-2">
                     <button
                         onClick={() => onBookingStatusChange('all')}
-                        className={`px - 3 py - 1.5 rounded - full text - xs font - semibold transition - all border ${selectedBookingStatus === 'all'
-                            ? 'bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-200'
-                            : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
-                            } `}
+                        className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${selectedBookingStatus === 'all'
+                                ? 'bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-200'
+                                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                            }`}
                     >
                         All Statuses
                     </button>
@@ -91,13 +88,13 @@ const CalendarHeader = ({
                         <button
                             key={status.id}
                             onClick={() => onBookingStatusChange(status.id)}
-                            className={`flex items - center px - 3 py - 1.5 rounded - full text - xs font - semibold transition - all border ${selectedBookingStatus === status.id
-                                ? status.activeClass
-                                : status.inactiveClass
-                                } `}
+                            className={`flex items-center px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${selectedBookingStatus === status.id
+                                    ? status.activeClass
+                                    : status.inactiveClass
+                                }`}
                         >
-                            <span className={`w - 2 h - 2 rounded - full mr - 2 ${selectedBookingStatus === status.id ? 'bg-white' : status.dotClass
-                                } `}></span>
+                            <span className={`w-2 h-2 rounded-full mr-2 ${selectedBookingStatus === status.id ? 'bg-white' : status.dotClass
+                                }`}></span>
                             {status.label}
                         </button>
                     ))}

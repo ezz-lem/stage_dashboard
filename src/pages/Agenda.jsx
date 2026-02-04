@@ -28,10 +28,8 @@ const Agenda = () => {
     const [loadingBookings, setLoadingBookings] = useState(true); // Only track booking loading
     const [error, setError] = useState(null);
 
-    // Filter, Search & Vehicle Pagination State
+    // Filter, Search State
     const [searchTerm, setSearchTerm] = useState('');
-    const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 20; // Match booking batch size
 
     // Booking Pagination & Filter State
     const [bookingPage, setBookingPage] = useState(1);
@@ -42,10 +40,6 @@ const Agenda = () => {
     const [tooltipEvent, setTooltipEvent] = useState(null);
     const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
 
-    useEffect(() => {
-        // Reset vehicle page to 1 when search changes
-        setCurrentPage(1);
-    }, [searchTerm]);
 
     useEffect(() => {
         // Reset booking page to 1 when status filter changes
@@ -106,30 +100,31 @@ const Agenda = () => {
         loadBookings();
     }, [bookingPage, selectedBookingStatus]);
 
-    // Build vehicle resources with pagination
+    // Build vehicle resources based on current bookings only
     const { resources, totalPages } = useMemo(() => {
+        // Only show vehicles that have bookings in the current batch
         const vehicleMap = new Map();
+        const vehicleOrder = []; // Track order of first appearance
 
-        // 1. Add fetched vehicles from Context
-        vehicles.forEach(v => {
-            vehicleMap.set(String(v.id), {
-                id: String(v.id),
-                title: `${v.brand} ${v.model} (${v.matricule})`
-            });
-        });
-
-        // 2. Add vehicles from bookings if missing
+        // Build vehicles from current bookings only
         bookings.forEach(b => {
             const vId = String(b.vehicle_id);
             if (!vehicleMap.has(vId)) {
-                vehicleMap.set(vId, {
+                // Try to get full vehicle info from context
+                const fullVehicle = vehicles.find(v => String(v.id) === vId);
+
+                // Prioritize the name from the booking record if available
+                const vehicleInfo = {
                     id: vId,
-                    title: b.vehicle_fullname || `Vehicle #${vId}`
-                });
+                    title: b.vehicle_fullname || (fullVehicle ? `${fullVehicle.brand} ${fullVehicle.model} (${fullVehicle.matricule})` : `Vehicle #${vId}`)
+                };
+
+                vehicleMap.set(vId, vehicleInfo);
+                vehicleOrder.push(vehicleInfo);
             }
         });
 
-        let result = Array.from(vehicleMap.values());
+        let result = vehicleOrder; // Use order of first booking appearance
 
         // Apply Search Filter
         if (searchTerm) {
@@ -139,19 +134,10 @@ const Agenda = () => {
             );
         }
 
-        // Keep API order (no sorting)
-
-        // Calculate pagination
-        const totalItems = result.length;
-        const total = Math.ceil(totalItems / itemsPerPage);
-
-        // Slice for current page
-        const start = (currentPage - 1) * itemsPerPage;
-        const end = start + itemsPerPage;
-        const paginated = result.slice(start, end);
-
-        return { resources: paginated, totalPages: total };
-    }, [vehicles, bookings, searchTerm, currentPage, itemsPerPage]);
+        // No pagination needed - show all vehicles from current booking batch
+        // Total pages is controlled by booking pagination
+        return { resources: result, totalPages: totalBookingPages };
+    }, [vehicles, bookings, searchTerm, totalBookingPages]);
 
     // Filtered Bookings for the calendar
     const filteredBookings = useMemo(() => {
