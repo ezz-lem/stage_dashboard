@@ -139,8 +139,7 @@ const Agenda = () => {
             );
         }
 
-        // Sort A-Z
-        result.sort((a, b) => a.title.localeCompare(b.title));
+        // Keep API order (no sorting)
 
         // Calculate pagination
         const totalItems = result.length;
