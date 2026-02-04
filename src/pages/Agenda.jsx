@@ -50,7 +50,6 @@ const Agenda = () => {
     useEffect(() => {
         const loadBookings = async () => {
             setLoadingBookings(true);
-            setBookings([]); // Clear old bookings while loading new batch
             setError(null);
             try {
                 // 1. Refresh Vehicles (background, mostly constant)
@@ -230,7 +229,17 @@ const Agenda = () => {
                     onBookingPageChange={setBookingPage}
                 />
 
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden relative">
+                    {/* Subtle Loading Overlay */}
+                    {loadingBookings && bookings.length > 0 && (
+                        <div className="absolute inset-0 bg-white/40 backdrop-blur-[1px] z-10 flex items-center justify-center transition-all duration-300">
+                            <div className="bg-white/80 px-4 py-2 rounded-full shadow-lg border border-gray-100 flex items-center gap-3">
+                                <Loader size={20} />
+                                <span className="text-sm font-semibold text-gray-700">Updating batch...</span>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="calendar-container relative">
                         <FullCalendar
                             plugins={[resourceTimelinePlugin, dayGridPlugin, interactionPlugin]}
